@@ -153,8 +153,9 @@ export class MapBuilder {
 		const gridSize = 1000; // Match map size
 		const spacing = 200;
 		let buildingCount = 0;
-
-		// Build buildings at each intersection (except near pizza shop)
+		let skippedCount = 0;
+		
+		// Build buildings at each intersection (except near pizza shop and delivery locations!)
 		for (let x = -gridSize; x <= gridSize; x += spacing) {
 			for (let z = -gridSize; z <= gridSize; z += spacing) {
 				// Skip pizza shop area (center 0,0)
@@ -172,18 +173,33 @@ export class MapBuilder {
 				];
 
 				offsets.forEach((offset) => {
-					if (math.random() > 0.3) { // 70% chance for building
-						this.createBuilding(
-							new Vector3(x + offset.x, 0, z + offset.z),
-							buildingFolder
-						);
+					const buildingPos = new Vector3(x + offset.x, 0, z + offset.z);
+					
+					// Check if this building would overlap with any delivery location
+					let tooCloseToDelivery = false;
+					for (const deliveryLoc of DELIVERY_LOCATIONS) {
+						const distToDelivery = new Vector3(
+							buildingPos.X - deliveryLoc.position.X,
+							0,
+							buildingPos.Z - deliveryLoc.position.Z
+						).Magnitude;
+						
+						if (distToDelivery < 80) { // Stay 80 studs away from delivery markers
+							tooCloseToDelivery = true;
+							skippedCount++;
+							break;
+						}
+					}
+					
+					if (!tooCloseToDelivery && math.random() > 0.3) { // 70% chance for building
+						this.createBuilding(buildingPos, buildingFolder);
 						buildingCount++;
 					}
 				});
 			}
 		}
 
-		print(`[MapBuilder] ✅ Created ${buildingCount} buildings`);
+		print(`[MapBuilder] ✅ Created ${buildingCount} buildings (skipped ${skippedCount} near delivery zones)`);
 	}
 
 	private createBuilding(position: Vector3, parent: Folder): void {

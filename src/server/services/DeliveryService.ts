@@ -89,33 +89,36 @@ export class DeliveryService {
 	}
 
 	private createLocationMarker(location: { name: string; position: Vector3; color: Color3 }): void {
-		// Place marker DIRECTLY on ground at Y=1 (same as vehicle driving level!)
-		const groundPosition = new Vector3(location.position.X, 1, location.position.Z);
+		// Elevated position (above any buildings!)
+		const groundPosition = new Vector3(location.position.X, 5, location.position.Z);
 		
-		print(`[DeliveryService] Creating marker for ${location.name} at (${groundPosition.X}, ${groundPosition.Y}, ${groundPosition.Z})`);
+		print(`[DeliveryService] 📍 Creating CIRCULAR delivery marker at (${groundPosition.X}, ${groundPosition.Y}, ${groundPosition.Z})`);
 		
-		// HUGE flat marker on the ground
+		// CIRCULAR ground marker (using Cylinder!)
 		const marker = new Instance("Part");
 		marker.Name = location.name;
-		marker.Size = new Vector3(50, 0.5, 50); // MASSIVE 50x50 zone!
+		marker.Shape = Enum.PartType.Cylinder; // CIRCULAR!
+		marker.Size = new Vector3(2, 50, 50); // Height, Diameter, Diameter (50 stud circle!)
 		marker.Position = groundPosition;
+		marker.CFrame = marker.CFrame.mul(CFrame.Angles(0, 0, math.pi / 2)); // Rotate to lay flat
 		marker.Anchored = true;
 		marker.CanCollide = false; // Drive through it
 		marker.Color = location.color;
 		marker.Material = Enum.Material.Neon;
-		marker.Transparency = 0.3; // More visible
+		marker.Transparency = 0.2; // More visible
 		marker.Parent = this.deliveryLocationsFolder;
 
-		// Add a SUPER tall beam for visibility from anywhere
+		// Add a SUPER tall CIRCULAR beam from ground up for visibility
 		const beam = new Instance("Part");
 		beam.Name = "Beam";
-		beam.Size = new Vector3(4, 300, 4); // HUGE beam
-		beam.Position = groundPosition.add(new Vector3(0, 150, 0)); // Center at 150 up
+		beam.Shape = Enum.PartType.Cylinder; // Also circular!
+		beam.Size = new Vector3(300, 8, 8); // Height, Diameter, Diameter
+		beam.Position = new Vector3(location.position.X, 150, location.position.Z); // Center at 150 up
 		beam.Anchored = true;
 		beam.CanCollide = false;
 		beam.Color = location.color;
 		beam.Material = Enum.Material.Neon;
-		beam.Transparency = 0.4; // More visible
+		beam.Transparency = 0.5; // Semi-transparent
 		beam.Parent = marker;
 
 		// Add label

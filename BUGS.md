@@ -2,37 +2,26 @@
 
 ## 🐛 Active Bugs
 
-### Delivery Markers Under Buildings
-**Status:** Open  
-**Priority:** Medium  
-**Reported:** 2026-01-27
-
-**Description:**
-Some delivery point markers are spawning underneath buildings, making them hard to see and potentially confusing for gameplay.
-
-**Affected Files:**
-- `src/server/services/DeliveryService.ts` - `createLocationMarker()` method
-- `src/shared/config.ts` - `DELIVERY_LOCATIONS` array
-
-**Possible Causes:**
-1. Building placement in `MapBuilder.ts` might be overlapping with delivery coordinates
-2. Delivery marker Y-position is set to ground level (Y=1) but buildings extend downward
-3. Random building generation doesn't check for delivery location conflicts
-
-**Potential Solutions:**
-1. Ensure delivery locations avoid building spawn zones
-2. Raise delivery marker Y-position slightly (Y=2 or Y=3)
-3. Add collision detection between buildings and delivery markers during map generation
-4. Make delivery markers taller/more visible (increase beam height or add floating elements)
-
-**Steps to Reproduce:**
-1. Start game and pick up pizza
-2. Drive to various delivery locations
-3. Some markers will be partially or fully obscured by buildings
+*No active bugs currently!*
 
 ---
 
 ## ✅ Fixed Bugs
+
+### Delivery Markers Under Buildings (Fixed 2026-01-28)
+**Issue:** Delivery point markers were spawning underneath buildings, making them hard to see.  
+**Fixes Implemented:**
+1. Changed markers from square (50x50) to circular (50 diameter) using Cylinder shape
+2. Elevated marker position from Y=1 to Y=5 (above buildings)
+3. Made beams circular (8 stud diameter) instead of square (4x4)
+4. Added building collision detection - buildings now skip spawning within 80 studs of delivery locations
+5. Buildings spawn count now logs how many were skipped due to delivery zones
+
+**Files Changed:**
+- `src/server/services/DeliveryService.ts` - Circular markers at Y=5
+- `src/server/services/MapBuilder.ts` - Added delivery location collision detection
+
+**Commit:** Latest
 
 ### Delivery Effects Delayed (Fixed 2026-01-27)
 **Issue:** Visual effects (explosions, sparkles) were delayed by ~1-2 seconds after delivery completion.  
