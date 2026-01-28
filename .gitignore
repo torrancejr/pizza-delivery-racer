@@ -1,0 +1,36 @@
+# Compiled Lua output
+out/
+
+# npm dependencies
+node_modules/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Roblox Studio files
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+.cursor/
