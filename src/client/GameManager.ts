@@ -9,6 +9,7 @@ import { EffectsManager } from "./effects/EffectsManager";
 import { DeliveryTask, DeliveryResult, PlayerScore } from "shared/module";
 
 export class GameManager {
+	private targetBeacon?: Part;
 	private player: Player;
 	private character?: Model;
 	private vehicle?: Model;
@@ -345,9 +346,10 @@ export class GameManager {
 		const speed = this.vehicleController.getCurrentSpeed();
 		this.hud.updateSpeed(speed);
 
-		// Update delivery distance
+		// Update delivery distance AND direction arrow
 		if (this.currentDelivery) {
 			this.updateDeliveryDistance(); // Update UI distance!
+			this.updateDirectionArrow(); // Update direction arrow!
 		}
 
 		// Debug every 60 frames (about once per second)
@@ -376,7 +378,7 @@ export class GameManager {
 	private updateDeliveryDistance(): void {
 		if (!this.currentDelivery || !this.vehicle) return;
 
-		const vehiclePos = this.vehicle.PrimaryPart!.Position;
+		const vehiclePos = this.vehicle.PrimaryPart?.Position || this.vehicle.GetPivot().Position;
 		
 		// Calculate distance to next target (pickup if no pizza, delivery if have pizza)
 		const targetPos = this.hasPizza 
@@ -386,34 +388,66 @@ export class GameManager {
 		const distance = vehiclePos.sub(targetPos).Magnitude;
 		const distanceMeters = math.floor(distance);
 		
-		// Update HUD with distance
+		// Update HUD with distance - always show it!
 		this.hud.updateDeliveryInfo(this.currentDelivery, distanceMeters, this.hasPizza);
 	}
 
-	private updateDeliveryArrow(): void {
-		if (!this.deliveryArrow || !this.currentDelivery || !this.vehicle) return;
-
-		const vehiclePos = this.vehicle.PrimaryPart!.Position;
-		const targetPos = this.currentDelivery.deliveryLocation.position;
-		const direction = targetPos.sub(vehiclePos);
-		const distance = direction.Magnitude;
-
-		// Position arrow above vehicle
-		const arrowPos = vehiclePos.add(new Vector3(0, 15, 0)).add(direction.Unit.mul(10));
-		this.deliveryArrow.Position = arrowPos;
-
-		// Point arrow toward target
-		this.deliveryArrow.CFrame = new CFrame(arrowPos, targetPos);
-
-		// Update distance label
-		const billboard = this.deliveryArrow.FindFirstChild("BillboardGui") as BillboardGui;
-		if (billboard) {
-			const label = billboard.FindFirstChild("TextLabel") as TextLabel;
-			if (label) {
-				label.Text = `${math.floor(distance)}m`;
-			}
+	private updateDirectionArrow(): void {
+		if (!this.currentDelivery) {
+			// No delivery - hide arrow
+			this.hud.hideDirectionArrow();
+			return;
 		}
+		
+		if (!this.vehicle) {
+			warn("[GameManager] ❌ updateDirectionArrow: No vehicle!");
+			return;
+		}
+
+		const vehiclePos = this.vehicle.PrimaryPart?.Position || this.vehicle.GetPivot().Position;
+		const targetPos = this.hasPizza 
+			? this.currentDelivery.deliveryLocation.position 
+			: this.currentDelivery.pickupLocation.position;
+
+		// Debug occasionally
+		if (math.random() < 0.05) { // 5% of frames
+			warn(`[GameManager] 🎯 Updating arrow: hasPizza=${this.hasPizza}, target=${this.hasPizza ? "delivery" : "pickup"}`);
+		}
+
+		this.hud.updateDirectionArrow(vehiclePos, targetPos);
 	}
+
+	private createTargetBeacon(position: Vector3): void {
+		// Remove old beacon
+		if (this.targetBeacon) {
+			this.targetBeacon.Destroy();
+		}
+
+		// Create a HUGE glowing beacon at target location
+		const beacon = new Instance("Part");
+		beacon.Name = "TargetBeacon";
+		beacon.Size = new Vector3(10, 50, 10);
+		beacon.Position = position.add(new Vector3(0, 25, 0)); // Center at 25 up
+		beacon.Anchored = true;
+		beacon.CanCollide = false;
+		beacon.Color = new Color3(0.2, 1, 0.3); // Bright green
+		beacon.Material = Enum.Material.Neon;
+		beacon.Transparency = 0.3;
+		beacon.Parent = Workspace;
+
+		// Add pulsing effect
+		task.spawn(() => {
+			while (beacon && beacon.Parent) {
+				const pulse = 0.3 + math.sin(os.clock() * 3) * 0.2;
+				beacon.Transparency = pulse;
+				task.wait(0.05);
+			}
+		});
+
+		this.targetBeacon = beacon;
+		warn(`[GameManager] ✅ Created glowing beacon at (${math.floor(position.X)}, ${math.floor(position.Z)})`);
+	}
+
 
 	private checkZones(): void {
 		if (!this.vehicle) {
@@ -470,6 +504,10 @@ export class GameManager {
 			this.hasPizza = true;
 			this.hud.setPizzaPickedUp(true);
 			this.hud.showNotification("🍕 PIZZA PICKED UP! Now deliver it!", 2.5);
+			
+			// Move beacon to delivery location
+			this.createTargetBeacon(this.currentDelivery.deliveryLocation.position);
+			warn(`[GameManager] 🎯 Moved beacon to delivery location!`);
 		}
 
 		// Check delivery zone ONLY if we have pizza (don't check both in same frame!)
@@ -524,6 +562,10 @@ export class GameManager {
 		// Show delivery info
 		this.hud.showDeliveryInfo(task);
 		
+		// Create beacon at pickup location
+		this.createTargetBeacon(task.pickupLocation.position);
+		warn(`[GameManager] 🎯 Created beacon at pickup location!`);
+		
 		// Clear instructions for first delivery
 		if (this.isFirstDelivery) {
 			this.hud.showNotification(`🚗 Hold W to drive! Go to the RED marker first!`, 5);
@@ -575,6 +617,15 @@ export class GameManager {
 		}
 
 		this.currentDelivery = undefined;
+
+		// Hide direction arrow
+		this.hud.hideDirectionArrow();
+		
+		// Remove beacon
+		if (this.targetBeacon) {
+			this.targetBeacon.Destroy();
+			this.targetBeacon = undefined;
+		}
 
 		// Request new delivery after a short delay
 		task.wait(3);

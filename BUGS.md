@@ -2,7 +2,27 @@
 
 ## 🐛 Active Bugs
 
-*No active bugs currently!*
+### Money Display Formatting Issue
+**Status:** Open  
+**Severity:** Low (Visual)  
+**Description:**  
+The TIPS money display shows incorrect decimal placement. The far-right digit slot appears empty even after attempting to fix positioning logic. The display should show format `$XXXX.XX` (e.g., `$951.00`) but digits are not aligning correctly with the decimal point.
+
+**Steps to Reproduce:**
+1. Start game and earn tips
+2. Observe top-right TIPS display
+3. Notice far-right digit is empty or misaligned
+
+**Expected Behavior:**
+Money should display as `$951.00`, `$42.50`, etc. with proper decimal alignment.
+
+**Actual Behavior:**
+Last digit slot remains empty or decimal placement is incorrect.
+
+**Notes:**
+- Changed from "FARE" to "TIPS" label ✅
+- Attempted multiple positioning fixes for decimal and digit layout
+- May need complete redesign of slot-machine style digit layout
 
 ---
 
