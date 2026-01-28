@@ -34,6 +34,15 @@ export class MapBuilder {
 		
 		// Add parked cars
 		this.buildParkedCars();
+		
+		// Add moving traffic
+		this.buildMovingTraffic();
+		
+		// Add trees and plants
+		this.buildVegetation();
+		
+		// Add street details
+		this.buildStreetDetails();
 	}
 
 	private buildGroundPlane(): void {
@@ -407,5 +416,233 @@ export class MapBuilder {
 		car.Color = colors[math.random(0, colors.size() - 1)];
 		car.Material = Enum.Material.SmoothPlastic;
 		car.Parent = parent;
+	}
+
+	private buildMovingTraffic(): void {
+		const trafficFolder = new Instance("Folder");
+		trafficFolder.Name = "MovingTraffic";
+		trafficFolder.Parent = this.mapFolder;
+
+		// Spawn 15 traffic cars at random locations
+		const numCars = 15;
+		for (let i = 0; i < numCars; i++) {
+			task.spawn(() => {
+				task.wait(i * 2); // Stagger spawns
+				this.createTrafficCar(trafficFolder, i);
+			});
+		}
+
+		print(`[MapBuilder] ✅ Created ${numCars} moving traffic cars`);
+	}
+
+	private createTrafficCar(parent: Folder, id: number): void {
+		// Random spawn position on streets
+		const streetPositions = [-800, -600, -400, -200, 0, 200, 400, 600, 800];
+		const x = streetPositions[math.random(0, streetPositions.size() - 1)];
+		const z = streetPositions[math.random(0, streetPositions.size() - 1)];
+		
+		const car = new Instance("Part");
+		car.Name = `TrafficCar_${id}`;
+		car.Size = new Vector3(8, 4, 15);
+		car.Position = new Vector3(x, 3, z);
+		car.Anchored = false;
+		car.CanCollide = true;
+		
+		// Random colors
+		const colors = [
+			new Color3(0.8, 0.1, 0.1), // Red
+			new Color3(0.1, 0.3, 0.8), // Blue
+			new Color3(0.2, 0.2, 0.2), // Black
+			new Color3(0.8, 0.8, 0.8), // White
+			new Color3(0.9, 0.7, 0.1), // Yellow
+			new Color3(0.1, 0.6, 0.2), // Green
+		];
+		car.Color = colors[math.random(0, colors.size() - 1)];
+		car.Material = Enum.Material.SmoothPlastic;
+		car.Parent = parent;
+
+		// Add BodyVelocity for movement
+		const bodyVel = new Instance("BodyVelocity");
+		bodyVel.MaxForce = new Vector3(4000, 0, 4000);
+		
+		// Random direction (N/S or E/W)
+		const direction = math.random() > 0.5 ? 
+			new Vector3(math.random(20, 40), 0, 0) : 
+			new Vector3(0, 0, math.random(20, 40));
+		bodyVel.Velocity = direction;
+		bodyVel.Parent = car;
+
+		// Add BodyGyro to keep upright
+		const bodyGyro = new Instance("BodyGyro");
+		bodyGyro.MaxTorque = new Vector3(4000, 4000, 4000);
+		bodyGyro.CFrame = car.CFrame;
+		bodyGyro.Parent = car;
+
+		// Respawn car if it goes too far
+		task.spawn(() => {
+			while (car && car.Parent) {
+				task.wait(1);
+				const dist = car.Position.Magnitude;
+				if (dist > 1200) {
+					// Respawn at opposite side
+					const newX = streetPositions[math.random(0, streetPositions.size() - 1)];
+					const newZ = streetPositions[math.random(0, streetPositions.size() - 1)];
+					car.Position = new Vector3(newX, 3, newZ);
+					
+					// New random direction
+					const newDirection = math.random() > 0.5 ? 
+						new Vector3(math.random(20, 40), 0, 0) : 
+						new Vector3(0, 0, math.random(20, 40));
+					bodyVel.Velocity = newDirection;
+				}
+			}
+		});
+	}
+
+	private buildVegetation(): void {
+		const vegFolder = new Instance("Folder");
+		vegFolder.Name = "Vegetation";
+		vegFolder.Parent = this.mapFolder;
+
+		let treeCount = 0;
+		let plantCount = 0;
+
+		// Add trees around buildings and streets
+		for (let i = 0; i < 100; i++) {
+			const x = math.random(-900, 900);
+			const z = math.random(-900, 900);
+			
+			// Skip if too close to center (pizza shop)
+			if (math.sqrt(x * x + z * z) < 150) continue;
+			
+			// 70% trees, 30% bushes
+			if (math.random() > 0.3) {
+				this.createTree(new Vector3(x, 0, z), vegFolder);
+				treeCount++;
+			} else {
+				this.createBush(new Vector3(x, 0, z), vegFolder);
+				plantCount++;
+			}
+		}
+
+		print(`[MapBuilder] ✅ Created ${treeCount} trees and ${plantCount} bushes`);
+	}
+
+	private createTree(position: Vector3, parent: Folder): void {
+		// Tree trunk
+		const trunk = new Instance("Part");
+		trunk.Name = "TreeTrunk";
+		trunk.Size = new Vector3(3, 15, 3);
+		trunk.Position = new Vector3(position.X, 8.5, position.Z);
+		trunk.Anchored = true;
+		trunk.CanCollide = true;
+		trunk.Color = new Color3(0.4, 0.25, 0.1);
+		trunk.Material = Enum.Material.Wood;
+		trunk.Parent = parent;
+
+		// Tree canopy
+		const canopy = new Instance("Part");
+		canopy.Name = "TreeCanopy";
+		canopy.Shape = Enum.PartType.Ball;
+		canopy.Size = new Vector3(12, 12, 12);
+		canopy.Position = new Vector3(position.X, 18, position.Z);
+		canopy.Anchored = true;
+		canopy.CanCollide = false;
+		canopy.Color = new Color3(0.2, 0.5, 0.2);
+		canopy.Material = Enum.Material.Grass;
+		canopy.Parent = trunk;
+	}
+
+	private createBush(position: Vector3, parent: Folder): void {
+		const bush = new Instance("Part");
+		bush.Name = "Bush";
+		bush.Shape = Enum.PartType.Ball;
+		bush.Size = new Vector3(6, 4, 6);
+		bush.Position = new Vector3(position.X, 3, position.Z);
+		bush.Anchored = true;
+		bush.CanCollide = true;
+		bush.Color = new Color3(0.15, 0.45, 0.15);
+		bush.Material = Enum.Material.Grass;
+		bush.Parent = parent;
+	}
+
+	private buildStreetDetails(): void {
+		const detailsFolder = new Instance("Folder");
+		detailsFolder.Name = "StreetDetails";
+		detailsFolder.Parent = this.mapFolder;
+
+		let benchCount = 0;
+		let signCount = 0;
+
+		// Add benches and trash cans near buildings
+		const gridSize = 1000;
+		const spacing = 300;
+
+		for (let x = -gridSize; x <= gridSize; x += spacing) {
+			for (let z = -gridSize; z <= gridSize; z += spacing) {
+				const distFromCenter = math.sqrt(x * x + z * z);
+				if (distFromCenter < 150) continue;
+
+				if (math.random() > 0.6) {
+					this.createBench(new Vector3(x + 40, 0, z + 40), detailsFolder);
+					benchCount++;
+				}
+
+				if (math.random() > 0.7) {
+					this.createStreetSign(new Vector3(x + 20, 0, z + 20), detailsFolder);
+					signCount++;
+				}
+			}
+		}
+
+		print(`[MapBuilder] ✅ Created ${benchCount} benches and ${signCount} street signs`);
+	}
+
+	private createBench(position: Vector3, parent: Folder): void {
+		// Bench seat
+		const seat = new Instance("Part");
+		seat.Name = "BenchSeat";
+		seat.Size = new Vector3(8, 1, 3);
+		seat.Position = new Vector3(position.X, 2.5, position.Z);
+		seat.Anchored = true;
+		seat.CanCollide = true;
+		seat.Color = new Color3(0.4, 0.25, 0.1);
+		seat.Material = Enum.Material.Wood;
+		seat.Parent = parent;
+
+		// Bench back
+		const back = new Instance("Part");
+		back.Name = "BenchBack";
+		back.Size = new Vector3(8, 3, 0.5);
+		back.Position = new Vector3(position.X, 4, position.Z + 1.25);
+		back.Anchored = true;
+		back.CanCollide = true;
+		back.Color = new Color3(0.4, 0.25, 0.1);
+		back.Material = Enum.Material.Wood;
+		back.Parent = seat;
+	}
+
+	private createStreetSign(position: Vector3, parent: Folder): void {
+		// Sign post
+		const post = new Instance("Part");
+		post.Name = "SignPost";
+		post.Size = new Vector3(0.5, 8, 0.5);
+		post.Position = new Vector3(position.X, 5, position.Z);
+		post.Anchored = true;
+		post.CanCollide = true;
+		post.Color = new Color3(0.3, 0.3, 0.3);
+		post.Material = Enum.Material.Metal;
+		post.Parent = parent;
+
+		// Sign board
+		const board = new Instance("Part");
+		board.Name = "SignBoard";
+		board.Size = new Vector3(4, 3, 0.2);
+		board.Position = new Vector3(position.X, 9, position.Z);
+		board.Anchored = true;
+		board.CanCollide = false;
+		board.Color = new Color3(0.1, 0.6, 0.1);
+		board.Material = Enum.Material.SmoothPlastic;
+		board.Parent = post;
 	}
 }
