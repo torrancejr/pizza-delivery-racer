@@ -23,8 +23,8 @@ export const GameConfig = {
 };
 
 export const VehicleConfig: VehicleStats = {
-	maxSpeed: 120, // Studs per second (FAST!)
-	acceleration: 50,
+	maxSpeed: 180, // Studs per second (FASTER for 3x bigger map!)
+	acceleration: 60, // Faster acceleration
 	turnSpeed: 6, // Radians per second (responsive arcade turning)
 	driftFactor: 0.7, // How much sideways friction is reduced during drift
 	jumpPower: 80,
@@ -37,46 +37,67 @@ export const PIZZA_SHOP: DeliveryLocation = {
 	color: new Color3(1, 0.2, 0.2), // Red
 };
 
+// Delivery locations - reasonable distances (300-800 studs from center)
 export const DELIVERY_LOCATIONS: DeliveryLocation[] = [
 	{
 		name: "Downtown Office",
-		position: new Vector3(150, 1, 100), // Ground level!
+		position: new Vector3(400, 1, 300), // Northeast
 		color: new Color3(0.2, 0.5, 1), // Blue
 	},
 	{
 		name: "Beach House",
-		position: new Vector3(-200, 1, 180), // Ground level!
+		position: new Vector3(-500, 1, 600), // Northwest
 		color: new Color3(1, 1, 0.2), // Yellow
 	},
 	{
 		name: "Mountain Lodge",
-		position: new Vector3(100, 1, -150), // Ground level!
+		position: new Vector3(600, 1, -500), // Southeast
 		color: new Color3(0.6, 0.3, 0.1), // Brown
 	},
 	{
 		name: "Skyscraper Penthouse",
-		position: new Vector3(180, 1, -50), // Ground level!
+		position: new Vector3(700, 1, 200), // East
 		color: new Color3(0.8, 0.8, 0.8), // Gray
 	},
 	{
 		name: "Suburb Villa",
-		position: new Vector3(-120, 1, -100), // Ground level!
+		position: new Vector3(-400, 1, -400), // Southwest
 		color: new Color3(0.2, 1, 0.5), // Green
 	},
 	{
 		name: "Industrial District",
-		position: new Vector3(250, 1, 0), // Ground level!
+		position: new Vector3(800, 1, -100), // East
 		color: new Color3(0.5, 0.5, 0.5), // Dark gray
 	},
 	{
 		name: "Park Pavilion",
-		position: new Vector3(-80, 1, 120), // Ground level!
+		position: new Vector3(-600, 1, 300), // Northwest
 		color: new Color3(0.4, 1, 0.4), // Light green
 	},
 	{
 		name: "Harbor Warehouse",
-		position: new Vector3(-180, 1, -180), // Ground level!
+		position: new Vector3(-700, 1, -600), // Southwest
 		color: new Color3(0.2, 0.3, 0.6), // Dark blue
+	},
+	{
+		name: "Airport Terminal",
+		position: new Vector3(500, 1, 700), // Northeast
+		color: new Color3(1, 0.5, 0), // Orange
+	},
+	{
+		name: "Shopping Mall",
+		position: new Vector3(300, 1, 500), // North
+		color: new Color3(1, 0.2, 0.8), // Pink
+	},
+	{
+		name: "Sports Stadium",
+		position: new Vector3(-300, 1, -700), // South
+		color: new Color3(0.8, 0.2, 0.2), // Dark red
+	},
+	{
+		name: "Tech Campus",
+		position: new Vector3(450, 1, 650), // Northeast
+		color: new Color3(0.5, 1, 1), // Cyan
 	},
 ];
 

@@ -31,8 +31,8 @@ export class SpawnLocationFixer {
 		const spawn = new Instance("SpawnLocation");
 		spawn.Name = "PizzaShopSpawn";
 		spawn.Size = new Vector3(20, 1, 20); // BIGGER spawn zone
-		// Spawn DIRECTLY at pizza shop pickup zone
-		spawn.Position = new Vector3(0, 2, 0);
+		// Spawn IN FRONT of pizza shop at ground level (not on roof!)
+		spawn.Position = new Vector3(0, 2, 0); // At ground level, center of pizza shop pickup zone
 		spawn.Anchored = true;
 		spawn.BrickColor = BrickColor.Red(); // RED for pizza shop!
 		spawn.Material = Enum.Material.Neon;
@@ -44,6 +44,6 @@ export class SpawnLocationFixer {
 		spawn.AllowTeamChangeOnTouch = false;
 		spawn.Parent = Workspace;
 
-		print(`[SpawnLocationFixer] ✓ Created LARGE spawn at (0, 2, 0) AT PIZZA SHOP`);
+		print(`[SpawnLocationFixer] ✓ Created spawn at (0, 2, 0) IN FRONT of pizza shop (ground level)`);
 	}
 }

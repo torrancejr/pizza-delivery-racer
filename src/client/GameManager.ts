@@ -118,8 +118,13 @@ export class GameManager {
 		// Delivery completed
 		const deliveryCompletedEvent = this.remoteEvents.get("DeliveryCompleted")!;
 		deliveryCompletedEvent.OnClientEvent.Connect((result: unknown) => {
+			warn("🔥🔥🔥 DELIVERY COMPLETED EVENT RECEIVED FROM SERVER!");
+			warn("Result: " + tostring(result));
 			if (this.isDeliveryResult(result)) {
+				warn("✅ Result is valid, calling onDeliveryCompleted...");
 				this.onDeliveryCompleted(result);
+			} else {
+				warn("❌ Result is NOT valid!");
 			}
 		});
 
@@ -340,9 +345,8 @@ export class GameManager {
 		const speed = this.vehicleController.getCurrentSpeed();
 		this.hud.updateSpeed(speed);
 
-		// Update delivery arrow AND distance
-		if (this.currentDelivery && this.deliveryArrow) {
-			this.updateDeliveryArrow();
+		// Update delivery distance
+		if (this.currentDelivery) {
 			this.updateDeliveryDistance(); // Update UI distance!
 		}
 
@@ -489,6 +493,14 @@ export class GameManager {
 		if (this.isInDeliveryZone && !wasInDelivery && this.hasPizza) {
 			// In delivery zone with pizza - complete delivery
 			print(`[GameManager] ✅✅✅ DELIVERY COMPLETE! Distance: ${deliveryDistance}`);
+			
+			// INSTANT EFFECTS! Trigger IMMEDIATELY!
+			if (this.effectsManager && this.vehicle) {
+				warn("🎆🎆🎆 INSTANT EFFECTS TRIGGERED!");
+				const vehiclePos = this.vehicle.PrimaryPart?.Position || this.vehicle.GetPivot().Position;
+				this.effectsManager.playDeliveryCompleteEffect(vehiclePos, true);
+			}
+			
 			this.completeDelivery();
 		}
 	}
@@ -519,18 +531,22 @@ export class GameManager {
 			this.hud.showNotification(`NEW DELIVERY: Get pizza, deliver to ${task.deliveryLocation.name}`, 3);
 		}
 
-		// Create delivery arrow pointing to delivery destination
-		if (this.effectsManager) {
-			this.deliveryArrow = this.effectsManager.createDeliveryArrow(task.deliveryLocation.position);
-			this.deliveryArrow.Parent = Workspace;
-		}
+		// No delivery arrow - using HUD distance only
 
 		print(`[GameManager] ✅ Delivery setup complete! Ready to check zones.`);
 	}
 
 	private onDeliveryCompleted(result: DeliveryResult): void {
+		warn("🎯🎯🎯 onDeliveryCompleted() FUNCTION CALLED!");
+		warn("Success: " + tostring(result.success));
+		warn("Total tip: $" + tostring(result.totalTip));
+		
 		// Stop timer
 		this.timerManager.stopTimer();
+
+		// SAVE DELIVERY POSITION FIRST!
+		const deliveryPosition = this.currentDelivery?.deliveryLocation.position;
+		warn("Delivery position: " + tostring(deliveryPosition));
 
 		// Reset pizza status
 		this.hasPizza = false;
@@ -547,17 +563,13 @@ export class GameManager {
 
 		// Show result
 		if (result.success) {
+			warn("✅✅✅ DELIVERY WAS SUCCESSFUL!");
 			this.hud.showNotification(`✅ DELIVERY COMPLETE! +$${result.totalTip}`, 3);
 			this.scoreTracker.recordDelivery(true);
-
-			// Play success effect
-			if (this.effectsManager && this.currentDelivery) {
-				this.effectsManager.playDeliveryCompleteEffect(
-					this.currentDelivery.deliveryLocation.position,
-					true
-				);
-			}
+			
+			// Effects already played instantly on zone entry!
 		} else {
+			warn("❌ DELIVERY FAILED!");
 			this.hud.showNotification("❌ DELIVERY FAILED! TIME RAN OUT!", 3);
 			this.scoreTracker.recordDelivery(false);
 		}
