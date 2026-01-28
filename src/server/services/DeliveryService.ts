@@ -75,6 +75,13 @@ export class DeliveryService {
 	}
 
 	private createDeliveryMarkers(): void {
+		// DELETE old markers if they exist!
+		const oldMarkers = game.Workspace.FindFirstChild("DeliveryLocations");
+		if (oldMarkers) {
+			warn("[DeliveryService] 🗑️ Deleting old delivery markers...");
+			oldMarkers.Destroy();
+		}
+		
 		this.deliveryLocationsFolder = new Instance("Folder");
 		this.deliveryLocationsFolder.Name = "DeliveryLocations";
 		this.deliveryLocationsFolder.Parent = game.Workspace;
@@ -86,19 +93,21 @@ export class DeliveryService {
 		DELIVERY_LOCATIONS.forEach((location) => {
 			this.createLocationMarker(location);
 		});
+		
+		print("[DeliveryService] ✅ All delivery markers created!");
 	}
 
 	private createLocationMarker(location: { name: string; position: Vector3; color: Color3 }): void {
-		// Elevated position (above any buildings!)
-		const groundPosition = new Vector3(location.position.X, 5, location.position.Z);
+		// Ground level position (same as driving!)
+		const groundPosition = new Vector3(location.position.X, 1, location.position.Z);
 		
 		print(`[DeliveryService] 📍 Creating CIRCULAR delivery marker at (${groundPosition.X}, ${groundPosition.Y}, ${groundPosition.Z})`);
 		
-		// CIRCULAR ground marker (using Cylinder!)
+		// CIRCULAR ground marker (using Cylinder laid flat!)
 		const marker = new Instance("Part");
 		marker.Name = location.name;
 		marker.Shape = Enum.PartType.Cylinder; // CIRCULAR!
-		marker.Size = new Vector3(2, 50, 50); // Height, Diameter, Diameter (50 stud circle!)
+		marker.Size = new Vector3(0.5, 50, 50); // Thin height (0.5), 50 stud diameter circle!
 		marker.Position = groundPosition;
 		marker.CFrame = marker.CFrame.mul(CFrame.Angles(0, 0, math.pi / 2)); // Rotate to lay flat
 		marker.Anchored = true;
